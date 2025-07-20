@@ -85,6 +85,37 @@ def build_grid(players, enemies):
             grid[r][c] = f"E:{ename[:2]}"
     return grid
 
+def get_loot(player_class):
+    loot_options = ["Potion", "Gold", "Scroll", "Iron Sword", "Mana Crystal"]
+    return random.choice(loot_options)
+
+def enemy_turn(room_id):
+    state = games[room_id]["state"]
+    players = games[room_id]["players"]
+    enemies = state["enemies"]
+    for ename, edata in list(enemies.items()):
+        if edata["hp"] <= 0:
+            continue
+        living_players = [p for p in players.values() if p["hp"] > 0]
+        if not living_players:
+            break
+        nearest = min(living_players, key=lambda p: abs(p["pos"][0] - edata["pos"][0]) + abs(p["pos"][1] - edata["pos"][1]))
+        prow, pcol = nearest["pos"]
+        erow, ecol = edata["pos"]
+        # If adjacent, attack
+        if abs(prow - erow) + abs(pcol - ecol) == 1:
+            nearest["hp"] -= 2  # Enemy attack damage
+        else:
+            # Move toward player
+            drow = 1 if prow > erow else -1 if prow < erow else 0
+            dcol = 1 if pcol > ecol else -1 if pcol < ecol else 0
+            new_row = erow + drow if 0 <= erow + drow < 6 else erow
+            new_col = ecol + dcol if 0 <= ecol + dcol < 6 else ecol
+            occupied = [p["pos"] for p in players.values() if p["hp"] > 0]
+            occupied += [e["pos"] for e in enemies.values() if e["hp"] > 0 and e != edata]
+            if (new_row, new_col) not in occupied:
+                edata["pos"] = (new_row, new_col)
+
 @app.post("/create_room")
 def create_room():
     room_id = str(uuid.uuid4())[:8]
@@ -121,7 +152,6 @@ def join_room(
                 "error": "Class and subclass required",
                 "classes": CLASSES
             }
-        # Place new players in the bottom row, spread out
         pos = (5, len(games[room_id]["players"]) + 1)
         games[room_id]["players"][player] = {
             "name": player,
@@ -135,12 +165,13 @@ def join_room(
             "weapon": STARTING_WEAPON.get(player_class, ""),
             "gold": 100,
             "hp": 10,
-            "pos": pos
+            "pos": pos,
+            "status": [],
+            "achievements": []
         }
         games[room_id]["player_order"].append(player)
     if games[room_id]["state"]["turn"] is None:
         games[room_id]["state"]["turn"] = games[room_id]["player_order"][0]
-    # Update grid
     games[room_id]["state"]["grid"] = build_grid(games[room_id]["players"], games[room_id]["state"]["enemies"])
     return {
         "ok": True,
@@ -174,7 +205,6 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
                         "left": (prow, max(0, pcol - 1)),
                         "right": (prow, min(5, pcol + 1))
                     }[direction]
-                    # Check if new_pos is empty
                     occupied = [p["pos"] for p in games[room_id]["players"].values() if p["hp"] > 0 and p["name"] != player]
                     occupied += [e["pos"] for e in games[room_id]["state"]["enemies"].values()]
                     if new_pos not in occupied:
@@ -189,7 +219,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
                             games[room_id]["state"]["enemies"][target]["hp"] -= 3
                             if games[room_id]["state"]["enemies"][target]["hp"] <= 0:
                                 del games[room_id]["state"]["enemies"][target]
-                # --- Spell logic ---
+                # --- Spell logic (AoE for Fireball) ---
                 if "spell" in action:
                     spell = action["spell"]
                     target = action.get("target")
@@ -198,20 +228,82 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
                         ppos = games[room_id]["players"][player]["pos"]
                         epos = games[room_id]["state"]["enemies"][target]["pos"]
                         if in_range(ppos, epos, rng):
-                            games[room_id]["state"]["enemies"][target]["hp"] -= 5
-                            if games[room_id]["state"]["enemies"][target]["hp"] <= 0:
-                                del games[room_id]["state"]["enemies"][target]
+                            for ename, edata in list(games[room_id]["state"]["enemies"].items()):
+                                if in_range(epos, edata["pos"], 1):
+                                    edata["hp"] -= 5
+                                    if edata["hp"] <= 0:
+                                        del games[room_id]["state"]["enemies"][ename]
                     if spell == "Heal" and target in games[room_id]["players"]:
                         ppos = games[room_id]["players"][player]["pos"]
                         tpos = games[room_id]["players"][target]["pos"]
                         if in_range(ppos, tpos, rng):
                             games[room_id]["players"][target]["hp"] += 5
+                # --- Use item ---
+                if "use_item" in action:
+                    item = action["use_item"]
+                    if item in games[room_id]["players"][player]["inventory"]:
+                        if item == "Potion":
+                            games[room_id]["players"][player]["hp"] += 5
+                        games[room_id]["players"][player]["inventory"].remove(item)
+                # --- Trade ---
+                if "trade" in action:
+                    item = action["trade"]["item"]
+                    to_player = action["trade"]["to"]
+                    if item in games[room_id]["players"][player]["inventory"]:
+                        games[room_id]["players"][player]["inventory"].remove(item)
+                        games[room_id]["players"][to_player]["inventory"].append(item)
+                # --- Give gold ---
+                if "give_gold" in action:
+                    amount = action["give_gold"]["amount"]
+                    to_player = action["give_gold"]["to"]
+                    if games[room_id]["players"][player]["gold"] >= amount:
+                        games[room_id]["players"][player]["gold"] -= amount
+                        games[room_id]["players"][to_player]["gold"] += amount
+                # --- Buy ---
+                if "buy" in action:
+                    item = action["buy"]
+                    for shop_item in games[room_id]["state"]["shop"]:
+                        if shop_item["name"] == item and games[room_id]["players"][player]["gold"] >= shop_item["price"]:
+                            games[room_id]["players"][player]["gold"] -= shop_item["price"]
+                            games[room_id]["players"][player]["inventory"].append(item)
+                            break
+                # --- Sell ---
+                if "sell" in action:
+                    item = action["sell"]
+                    if item in games[room_id]["players"][player]["inventory"]:
+                        price = next((i["price"] for i in games[room_id]["state"]["shop"] if i["name"] == item), 10) // 2
+                        games[room_id]["players"][player]["gold"] += price
+                        games[room_id]["players"][player]["inventory"].remove(item)
+                # --- XP/Level logic ---
+                if "gain_xp" in action:
+                    xp = action["gain_xp"]
+                    pdata = games[room_id]["players"][player]
+                    pdata["xp"] += xp
+                    if pdata["xp"] >= 100:
+                        pdata["level"] += 1
+                        pdata["xp"] = 0
+                        pdata["stats"]["Str"] += 1
+                        pdata["stats"]["Con"] += 1
+                        if pdata["class"] == "Mage" and "Lightning Bolt" not in pdata["spells"]:
+                            pdata["spells"].append("Lightning Bolt")
+                        if pdata["level"] == 3:
+                            pdata["weapon"] = "Steel Sword"
+                # --- Status effects ---
+                if "apply_status" in action:
+                    effect = action["apply_status"]
+                    games[room_id]["players"][player].setdefault("status", []).append(effect)
                 # --- End turn ---
                 # Check win/lose
                 if all(p["hp"] <= 0 for p in games[room_id]["players"].values()):
                     games[room_id]["state"]["winner"] = "enemies"
                 elif not games[room_id]["state"]["enemies"]:
-                    # Next encounter or win
+                    for pname, pdata in games[room_id]["players"].items():
+                        loot = get_loot(pdata["class"])
+                        pdata["inventory"].append(loot)
+                    if games[room_id]["state"]["encounter"] == 1:
+                        games[room_id]["state"]["shop"].append({"name": "Steel Sword", "price": 100})
+                    if games[room_id]["state"]["encounter"] == 2:
+                        games[room_id]["state"]["shop"].append({"name": "Legendary Amulet", "price": 300})
                     games[room_id]["state"]["encounter"] += 1
                     if games[room_id]["state"]["encounter"] < len(ENCOUNTER_TABLE):
                         encounter = ENCOUNTER_TABLE[games[room_id]["state"]["encounter"]]
@@ -219,10 +311,10 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
                         games[room_id]["state"]["encounter_name"] = encounter["name"]
                     else:
                         games[room_id]["state"]["winner"] = "players"
-                # Advance turn
+                # Enemy AI turn
                 if not games[room_id]["state"]["winner"]:
+                    enemy_turn(room_id)
                     games[room_id]["state"]["turn"] = next_player(games[room_id]["player_order"], player)
-                # Update grid
                 games[room_id]["state"]["grid"] = build_grid(games[room_id]["players"], games[room_id]["state"]["enemies"])
                 for conn in connections[room_id]:
                     await conn.send_json(full_state(room_id))
