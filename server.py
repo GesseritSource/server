@@ -1,10 +1,14 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
-import uuid
+import json
 import random
+import asyncio
+from typing import Dict, List, Optional
+import os
 
 app = FastAPI()
 
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,128 +17,116 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-games = {}
-connections = {}
+# Game state storage
+games: Dict[str, Dict] = {}
+SAVE_DIR = 'saves'
 
-CLASSES = {
-    "Warrior": ["Berserker", "Titan"],
-    "Paladin": ["Oath of Conquest", "Oath of Protection"],
-    "Cleric": ["God Fearing", "War Cleric"],
-    "Priest": ["Savior", "Combat Medic"],
-    "Mage": ["Dragon Mage", "Chronomancer"],
-    "Ranger": ["Beast Master", "Deadshot"]
-}
-STARTING_STATS = {"Str": 15, "Con": 14, "Wis": 13, "Int": 12}
-STARTING_SPELLS = {
-    "Warrior": ["Taunt", "Defend"],
-    "Paladin": ["Divine Smite", "Lay on Hands"],
-    "Cleric": ["Guiding Bolt", "Bane"],
-    "Priest": ["Bless", "Healing Word"],
-    "Mage": ["Magic Missile", "Fireball"],
-    "Ranger": ["Hunter’s Mark", "Volley"]
-}
-STARTING_WEAPON = {
-    "Warrior": "Iron Greatsword",
-    "Paladin": "Iron Longsword",
-    "Cleric": "Wooden Mace",
-    "Priest": "Simple Staff",
-    "Mage": "Basic Wand",
-    "Ranger": "Wooden Shortbow"
-}
-SPELL_RANGES = {
-    "Fireball": 3,
-    "Magic Missile": 4,
-    "Lay on Hands": 1,
-    "Healing Word": 3,
-    "Guiding Bolt": 3,
-    "Bless": 3,
-    "Taunt": 2,
-    "Defend": 0
-}
-SHOP_ITEMS = [
-    {"name": "Potion", "price": 10},
-    {"name": "Iron Sword", "price": 50},
-    {"name": "Scroll", "price": 30}
-]
-ENCOUNTER_TABLE = [
-    {"name": "Goblin Ambush", "enemies": {"Goblin": {"pos": (0, 2), "hp": 10}, "Goblin2": {"pos": (0, 3), "hp": 10}}},
-    {"name": "Orc Patrol", "enemies": {"Orc": {"pos": (0, 2), "hp": 15}, "Goblin": {"pos": (1, 2), "hp": 10}}},
-    {"name": "Shaman's Circle", "enemies": {"Shaman": {"pos": (0, 2), "hp": 12}, "Goblin": {"pos": (1, 2), "hp": 10}, "Berserker": {"pos": (0, 3), "hp": 14}}},
-    {"name": "Dragon's Lair", "enemies": {"Dragon": {"pos": (0, 2), "hp": 50}}}
-]
+# Ensure save directory exists
+if not os.path.exists(SAVE_DIR):
+    os.makedirs(SAVE_DIR)
 
-def next_player(players, current):
-    idx = players.index(current)
-    return players[(idx + 1) % len(players)]
+def load_player_data(player_name: str, save_slot: int) -> Optional[Dict]:
+    """Load player data from save file"""
+    save_path = os.path.join(SAVE_DIR, f'save{save_slot}_{player_name}.json')
+    if os.path.exists(save_path):
+        try:
+            with open(save_path, 'r') as f:
+                return json.load(f)
+        except:
+            return None
+    return None
 
-def is_adjacent(pos1, pos2):
-    return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) == 1
+def save_player_data(player_name: str, save_slot: int, player_data: Dict):
+    """Save player data to file"""
+    save_path = os.path.join(SAVE_DIR, f'save{save_slot}_{player_name}.json')
+    with open(save_path, 'w') as f:
+        json.dump(player_data, f, indent=2)
 
-def in_range(pos1, pos2, rng):
-    return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1]) <= rng
-
-def build_grid(players, enemies):
-    grid = [[None for _ in range(6)] for _ in range(6)]
-    for pname, pdata in players.items():
-        if pdata["hp"] > 0:
-            r, c = pdata["pos"]
-            grid[r][c] = f"P:{pname[:2]}"
-    for ename, edata in enemies.items():
-        if edata["hp"] > 0:
-            r, c = edata["pos"]
-            grid[r][c] = f"E:{ename[:2]}"
-    return grid
-
-def get_loot(player_class):
-    loot_options = ["Potion", "Gold", "Scroll", "Iron Sword", "Mana Crystal"]
-    return random.choice(loot_options)
-
-def enemy_turn(room_id):
-    state = games[room_id]["state"]
-    players = games[room_id]["players"]
-    enemies = state["enemies"]
-    for ename, edata in list(enemies.items()):
-        if edata["hp"] <= 0:
-            continue
-        living_players = [p for p in players.values() if p["hp"] > 0]
-        if not living_players:
-            break
-        nearest = min(living_players, key=lambda p: abs(p["pos"][0] - edata["pos"][0]) + abs(p["pos"][1] - edata["pos"][1]))
-        prow, pcol = nearest["pos"]
-        erow, ecol = edata["pos"]
-        # If adjacent, attack
-        if abs(prow - erow) + abs(pcol - ecol) == 1:
-            nearest["hp"] -= 2  # Enemy attack damage
-        else:
-            # Move toward player
-            drow = 1 if prow > erow else -1 if prow < erow else 0
-            dcol = 1 if pcol > ecol else -1 if pcol < ecol else 0
-            new_row = erow + drow if 0 <= erow + drow < 6 else erow
-            new_col = ecol + dcol if 0 <= ecol + dcol < 6 else ecol
-            occupied = [p["pos"] for p in players.values() if p["hp"] > 0]
-            occupied += [e["pos"] for e in enemies.values() if e["hp"] > 0 and e != edata]
-            if (new_row, new_col) not in occupied:
-                edata["pos"] = (new_row, new_col)
+def create_new_player(name: str, player_class: str, subclass: str, save_slot: int) -> Dict:
+    """Create a new player with default stats"""
+    # Standard array: 15, 14, 13, 12
+    class_stat_priorities = {
+        'Warrior': ['Str', 'Con', 'Wis', 'Int'],
+        'Paladin': ['Con', 'Str', 'Wis', 'Int'],
+        'Cleric': ['Wis', 'Con', 'Str', 'Int'],
+        'Priest': ['Wis', 'Int', 'Con', 'Str'],
+        'Mage': ['Int', 'Wis', 'Con', 'Str'],
+        'Ranger': ['Str', 'Con', 'Wis', 'Int'],
+    }
+    
+    standard_array = [15, 14, 13, 12]
+    priorities = class_stat_priorities.get(player_class, ['Str', 'Con', 'Wis', 'Int'])
+    attributes = {}
+    for i, attr in enumerate(priorities):
+        attributes[attr] = standard_array[i]
+    
+    # Fill missing stats with 10
+    for attr in ['Str', 'Con', 'Wis', 'Int']:
+        if attr not in attributes:
+            attributes[attr] = 10
+    
+    # Preset starting spells
+    preset_spells = {
+        'Warrior': ['Taunt', 'Defend', 'Cleave', 'Charge'],
+        'Paladin': ['Divine Smite', 'Lay on Hands', 'Aura of Protection', 'Defend'],
+        'Cleric': ['Guiding Bolt', 'Bane', 'Prayer of Healing', 'Spiritual Weapon'],
+        'Priest': ['Bless', 'Healing Word', 'Sanctuary', 'Mass Heal'],
+        'Mage': ['Magic Missile', 'Fireball', 'Shield', 'Haste'],
+        'Ranger': ['Hunter\'s Mark', 'Volley', 'Cure Wounds', 'Defend'],
+    }
+    
+    # Initial weapons
+    initial_weapons = {
+        'Warrior': 'Longsword',
+        'Paladin': 'Warhammer',
+        'Cleric': 'Mace',
+        'Priest': 'Staff',
+        'Mage': 'Wand',
+        'Ranger': 'Shortbow',
+    }
+    
+    return {
+        'name': name,
+        'player_class': player_class,
+        'subclass': subclass,
+        'level': 1,
+        'spells': preset_spells.get(player_class, [])[:4],
+        'weapon': initial_weapons.get(player_class, 'Dagger'),
+        'inventory': [],
+        'gold': 0,
+        'save_slot': save_slot,
+        'xp': 0,
+        'ac': 10 + attributes.get('Con', 10),
+        'attributes': attributes,
+        'passive': 'None',
+        'hp': 10 + attributes.get('Con', 10),
+        'max_hp': 10 + attributes.get('Con', 10)
+    }
 
 @app.post("/create_room")
 def create_room():
-    room_id = str(uuid.uuid4())[:8]
+    """Create a new game room"""
+    room_id = f"room_{random.randint(1000, 9999)}"
     games[room_id] = {
         "players": {},
         "player_order": [],
         "state": {
             "turn": None,
-            "actions": [],
+            "phase": "setup",  # setup, combat, loot, shop
             "grid": [[None for _ in range(6)] for _ in range(6)],
-            "enemies": ENCOUNTER_TABLE[0]["enemies"].copy(),
-            "encounter": 0,
-            "encounter_name": ENCOUNTER_TABLE[0]["name"],
-            "shop": SHOP_ITEMS.copy(),
-            "round": 1,
-            "winner": None
+            "player_positions": {},
+            "enemies": {},
+            "player_hp": {},
+            "inventory": {},
+            "spells": {},
+            "gold": {},
+            "level": {},
+            "xp": {},
+            "shop_items": [],
+            "loot_pool": [],
+            "encounter_number": 0
         }
     }
-    connections[room_id] = []
     return {"room_id": room_id}
 
 @app.post("/join_room/{room_id}")
@@ -142,198 +134,279 @@ def join_room(
     room_id: str,
     player: str = Query(...),
     player_class: str = Query(None),
-    subclass: str = Query(None)
+    subclass: str = Query(None),
+    save_slot: int = Query(1),
+    load_save: bool = Query(False)
 ):
+    """Join a game room with player data"""
     if room_id not in games:
         return {"error": "Room not found"}
-    if player not in games[room_id]["players"]:
+    
+    # Load existing player data or create new player
+    if load_save:
+        player_data = load_player_data(player, save_slot)
+        if player_data:
+            games[room_id]["players"][player] = player_data
+        else:
+            return {"error": "Save file not found"}
+    else:
         if not player_class or not subclass:
-            return {
-                "error": "Class and subclass required",
-                "classes": CLASSES
-            }
-        pos = (5, len(games[room_id]["players"]) + 1)
-        games[room_id]["players"][player] = {
-            "name": player,
-            "class": player_class,
-            "subclass": subclass,
-            "level": 1,
-            "xp": 0,
-            "stats": dict(STARTING_STATS),
-            "inventory": [],
-            "spells": list(STARTING_SPELLS.get(player_class, [])),
-            "weapon": STARTING_WEAPON.get(player_class, ""),
-            "gold": 100,
-            "hp": 10,
-            "pos": pos,
-            "status": [],
-            "achievements": []
-        }
+            return {"error": "Player class and subclass required for new characters"}
+        player_data = create_new_player(player, player_class, subclass, save_slot)
+        games[room_id]["players"][player] = player_data
+    
+    # Add to player order if not already there
+    if player not in games[room_id]["player_order"]:
         games[room_id]["player_order"].append(player)
-    if games[room_id]["state"]["turn"] is None:
+    
+    # Set turn if not set
+    if games[room_id]["state"]["turn"] is None and games[room_id]["player_order"]:
         games[room_id]["state"]["turn"] = games[room_id]["player_order"][0]
-    games[room_id]["state"]["grid"] = build_grid(games[room_id]["players"], games[room_id]["state"]["enemies"])
-    return {
-        "ok": True,
-        "players": list(games[room_id]["players"].keys()),
-        "player_data": games[room_id]["players"][player]
+    
+    # Update state with player data
+    games[room_id]["state"]["player_hp"][player] = player_data["hp"]
+    games[room_id]["state"]["inventory"][player] = player_data["inventory"]
+    games[room_id]["state"]["spells"][player] = player_data["spells"]
+    games[room_id]["state"]["gold"][player] = player_data["gold"]
+    games[room_id]["state"]["level"][player] = player_data["level"]
+    games[room_id]["state"]["xp"][player] = player_data["xp"]
+    
+    return {"success": True, "player_data": player_data}
+
+@app.get("/list_saves/{player_name}")
+def list_saves(player_name: str):
+    """List available save slots for a player"""
+    saves = []
+    for i in range(1, 4):  # 3 save slots
+        save_path = os.path.join(SAVE_DIR, f'save{i}_{player_name}.json')
+        if os.path.exists(save_path):
+            try:
+                with open(save_path, 'r') as f:
+                    data = json.load(f)
+                    saves.append({
+                        "slot": i,
+                        "name": data.get("name", "Unknown"),
+                        "level": data.get("level", 1),
+                        "player_class": data.get("player_class", "Unknown"),
+                        "subclass": data.get("subclass", "Unknown")
+                    })
+            except:
+                continue
+    return {"saves": saves}
+
+@app.get("/get_classes")
+def get_classes():
+    """Get available classes and subclasses"""
+    classes = {
+        "Warrior": ["Fighter", "Barbarian"],
+        "Paladin": ["Devotion", "Vengeance"],
+        "Cleric": ["Life", "War"],
+        "Priest": ["Light", "Knowledge"],
+        "Mage": ["Evocation", "Abjuration"],
+        "Ranger": ["Hunter", "Beast Master"]
     }
+    return {"classes": classes}
+
+def generate_encounter(encounter_number: int) -> Dict:
+    """Generate enemies for an encounter"""
+    enemies = {}
+    enemy_types = ["Goblin", "Orc", "Troll", "Dragon"]
+    
+    # Scale difficulty with encounter number
+    num_enemies = min(encounter_number + 1, 4)
+    
+    for i in range(num_enemies):
+        enemy_type = random.choice(enemy_types)
+        enemy = {
+            "name": f"{enemy_type} {i+1}",
+            "type": enemy_type,
+            "hp": 20 + (encounter_number * 5),
+            "max_hp": 20 + (encounter_number * 5),
+            "damage": 5 + encounter_number,
+            "ac": 12 + encounter_number,
+            "position": [random.randint(0, 5), random.randint(0, 5)]
+        }
+        enemies[enemy["name"]] = enemy
+    
+    return enemies
+
+def generate_shop_items() -> List[Dict]:
+    """Generate shop items"""
+    items = [
+        {"name": "Health Potion", "cost": 50, "type": "consumable", "effect": "heal"},
+        {"name": "Mana Potion", "cost": 50, "type": "consumable", "effect": "mana"},
+        {"name": "Iron Sword", "cost": 100, "type": "weapon", "damage": 8},
+        {"name": "Leather Armor", "cost": 80, "type": "armor", "ac": 2},
+        {"name": "Magic Ring", "cost": 200, "type": "accessory", "effect": "buff"}
+    ]
+    return random.sample(items, 3)
+
+def generate_loot() -> List[Dict]:
+    """Generate loot pool"""
+    loot = [
+        {"name": "Gold", "amount": random.randint(10, 50)},
+        {"name": "Health Potion", "type": "consumable"},
+        {"name": "Magic Scroll", "type": "spell"},
+        {"name": "Gem", "value": random.randint(20, 100)}
+    ]
+    return random.sample(loot, 2)
 
 @app.websocket("/ws/{room_id}/{player}")
 async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
     await websocket.accept()
-    if room_id not in connections:
-        connections[room_id] = []
-    connections[room_id].append(websocket)
+    
+    if room_id not in games:
+        await websocket.close()
+        return
+    
     try:
-        await websocket.send_json(full_state(room_id))
         while True:
-            data = await websocket.receive_json()
-            if data.get("type") == "action":
-                if games[room_id]["state"]["turn"] != player or games[room_id]["state"]["winner"]:
-                    await websocket.send_json({"error": "Not your turn or game over"})
-                    continue
-                action = data["action"]
-                games[room_id]["state"]["actions"].append({"player": player, "action": action})
-                # --- Move logic ---
+            # Send current game state
+            state = games[room_id]["state"].copy()
+            state["players"] = games[room_id]["players"]
+            state["player_order"] = games[room_id]["player_order"]
+            await websocket.send(json.dumps(state))
+            
+            # Wait for action from player
+            if state["turn"] == player:
+                data = await websocket.recv()
+                action_data = json.loads(data)
+                action = action_data.get("action", {})
+                
+                # Handle different action types
                 if "move" in action:
                     direction = action["move"]
-                    prow, pcol = games[room_id]["players"][player]["pos"]
-                    new_pos = {
-                        "up": (max(0, prow - 1), pcol),
-                        "down": (min(5, prow + 1), pcol),
-                        "left": (prow, max(0, pcol - 1)),
-                        "right": (prow, min(5, pcol + 1))
-                    }[direction]
-                    occupied = [p["pos"] for p in games[room_id]["players"].values() if p["hp"] > 0 and p["name"] != player]
-                    occupied += [e["pos"] for e in games[room_id]["state"]["enemies"].values()]
-                    if new_pos not in occupied:
-                        games[room_id]["players"][player]["pos"] = new_pos
-                # --- Attack logic ---
-                if "attack" in action:
+                    current_pos = state["player_positions"].get(player, [0, 0])
+                    new_pos = current_pos.copy()
+                    
+                    if direction == "up" and new_pos[1] > 0:
+                        new_pos[1] -= 1
+                    elif direction == "down" and new_pos[1] < 5:
+                        new_pos[1] += 1
+                    elif direction == "left" and new_pos[0] > 0:
+                        new_pos[0] -= 1
+                    elif direction == "right" and new_pos[0] < 5:
+                        new_pos[0] += 1
+                    
+                    state["player_positions"][player] = new_pos
+                
+                elif "attack" in action:
                     target = action["attack"]
-                    if target in games[room_id]["state"]["enemies"]:
-                        ppos = games[room_id]["players"][player]["pos"]
-                        epos = games[room_id]["state"]["enemies"][target]["pos"]
-                        if is_adjacent(ppos, epos):
-                            games[room_id]["state"]["enemies"][target]["hp"] -= 3
-                            if games[room_id]["state"]["enemies"][target]["hp"] <= 0:
-                                del games[room_id]["state"]["enemies"][target]
-                # --- Spell logic (AoE for Fireball) ---
-                if "spell" in action:
+                    if target in state["enemies"]:
+                        enemy = state["enemies"][target]
+                        damage = random.randint(5, 15)
+                        enemy["hp"] -= damage
+                        if enemy["hp"] <= 0:
+                            del state["enemies"][target]
+                
+                elif "spell" in action:
                     spell = action["spell"]
                     target = action.get("target")
-                    rng = SPELL_RANGES.get(spell, 3)
-                    if spell == "Fireball" and target in games[room_id]["state"]["enemies"]:
-                        ppos = games[room_id]["players"][player]["pos"]
-                        epos = games[room_id]["state"]["enemies"][target]["pos"]
-                        if in_range(ppos, epos, rng):
-                            for ename, edata in list(games[room_id]["state"]["enemies"].items()):
-                                if in_range(epos, edata["pos"], 1):
-                                    edata["hp"] -= 5
-                                    if edata["hp"] <= 0:
-                                        del games[room_id]["state"]["enemies"][ename]
-                    if spell == "Heal" and target in games[room_id]["players"]:
-                        ppos = games[room_id]["players"][player]["pos"]
-                        tpos = games[room_id]["players"][target]["pos"]
-                        if in_range(ppos, tpos, rng):
-                            games[room_id]["players"][target]["hp"] += 5
-                # --- Use item ---
-                if "use_item" in action:
-                    item = action["use_item"]
-                    if item in games[room_id]["players"][player]["inventory"]:
-                        if item == "Potion":
-                            games[room_id]["players"][player]["hp"] += 5
-                        games[room_id]["players"][player]["inventory"].remove(item)
-                # --- Trade ---
-                if "trade" in action:
-                    item = action["trade"]["item"]
-                    to_player = action["trade"]["to"]
-                    if item in games[room_id]["players"][player]["inventory"]:
-                        games[room_id]["players"][player]["inventory"].remove(item)
-                        games[room_id]["players"][to_player]["inventory"].append(item)
-                # --- Give gold ---
-                if "give_gold" in action:
-                    amount = action["give_gold"]["amount"]
-                    to_player = action["give_gold"]["to"]
-                    if games[room_id]["players"][player]["gold"] >= amount:
-                        games[room_id]["players"][player]["gold"] -= amount
-                        games[room_id]["players"][to_player]["gold"] += amount
-                # --- Buy ---
-                if "buy" in action:
-                    item = action["buy"]
-                    for shop_item in games[room_id]["state"]["shop"]:
-                        if shop_item["name"] == item and games[room_id]["players"][player]["gold"] >= shop_item["price"]:
-                            games[room_id]["players"][player]["gold"] -= shop_item["price"]
-                            games[room_id]["players"][player]["inventory"].append(item)
+                    # Handle spell effects (simplified)
+                    if spell in ["Healing Word", "Cure Wounds"]:
+                        heal_amount = random.randint(10, 20)
+                        state["player_hp"][player] = min(
+                            state["player_hp"][player] + heal_amount,
+                            games[room_id]["players"][player]["max_hp"]
+                        )
+                    elif spell in ["Fireball", "Magic Missile"]:
+                        if target in state["enemies"]:
+                            damage = random.randint(15, 25)
+                            state["enemies"][target]["hp"] -= damage
+                            if state["enemies"][target]["hp"] <= 0:
+                                del state["enemies"][target]
+                
+                elif "shop" in action:
+                    item_name = action["shop"]
+                    player_gold = state["gold"][player]
+                    for item in state["shop_items"]:
+                        if item["name"] == item_name and player_gold >= item["cost"]:
+                            state["gold"][player] -= item["cost"]
+                            state["inventory"][player].append(item)
                             break
-                # --- Sell ---
-                if "sell" in action:
-                    item = action["sell"]
-                    if item in games[room_id]["players"][player]["inventory"]:
-                        price = next((i["price"] for i in games[room_id]["state"]["shop"] if i["name"] == item), 10) // 2
-                        games[room_id]["players"][player]["gold"] += price
-                        games[room_id]["players"][player]["inventory"].remove(item)
-                # --- XP/Level logic ---
-                if "gain_xp" in action:
-                    xp = action["gain_xp"]
-                    pdata = games[room_id]["players"][player]
-                    pdata["xp"] += xp
-                    if pdata["xp"] >= 100:
-                        pdata["level"] += 1
-                        pdata["xp"] = 0
-                        pdata["stats"]["Str"] += 1
-                        pdata["stats"]["Con"] += 1
-                        if pdata["class"] == "Mage" and "Lightning Bolt" not in pdata["spells"]:
-                            pdata["spells"].append("Lightning Bolt")
-                        if pdata["level"] == 3:
-                            pdata["weapon"] = "Steel Sword"
-                # --- Status effects ---
-                if "apply_status" in action:
-                    effect = action["apply_status"]
-                    games[room_id]["players"][player].setdefault("status", []).append(effect)
-                # --- End turn ---
-                # Check win/lose
-                if all(p["hp"] <= 0 for p in games[room_id]["players"].values()):
-                    games[room_id]["state"]["winner"] = "enemies"
-                elif not games[room_id]["state"]["enemies"]:
-                    for pname, pdata in games[room_id]["players"].items():
-                        loot = get_loot(pdata["class"])
-                        pdata["inventory"].append(loot)
-                    if games[room_id]["state"]["encounter"] == 1:
-                        games[room_id]["state"]["shop"].append({"name": "Steel Sword", "price": 100})
-                    if games[room_id]["state"]["encounter"] == 2:
-                        games[room_id]["state"]["shop"].append({"name": "Legendary Amulet", "price": 300})
-                    games[room_id]["state"]["encounter"] += 1
-                    if games[room_id]["state"]["encounter"] < len(ENCOUNTER_TABLE):
-                        encounter = ENCOUNTER_TABLE[games[room_id]["state"]["encounter"]]
-                        games[room_id]["state"]["enemies"] = encounter["enemies"].copy()
-                        games[room_id]["state"]["encounter_name"] = encounter["name"]
-                    else:
-                        games[room_id]["state"]["winner"] = "players"
-                # Enemy AI turn
-                if not games[room_id]["state"]["winner"]:
-                    enemy_turn(room_id)
-                    games[room_id]["state"]["turn"] = next_player(games[room_id]["player_order"], player)
-                games[room_id]["state"]["grid"] = build_grid(games[room_id]["players"], games[room_id]["state"]["enemies"])
-                for conn in connections[room_id]:
-                    await conn.send_json(full_state(room_id))
+                
+                elif "loot" in action:
+                    item_name = action["loot"]
+                    for item in state["loot_pool"]:
+                        if item["name"] == item_name:
+                            state["inventory"][player].append(item)
+                            state["loot_pool"].remove(item)
+                            break
+                
+                elif "next_phase" in action:
+                    current_phase = state["phase"]
+                    if current_phase == "setup":
+                        # Start combat
+                        state["phase"] = "combat"
+                        state["encounter_number"] += 1
+                        state["enemies"] = generate_encounter(state["encounter_number"])
+                        # Position players randomly
+                        for p in games[room_id]["player_order"]:
+                            state["player_positions"][p] = [random.randint(0, 2), random.randint(0, 2)]
+                    
+                    elif current_phase == "combat":
+                        # Check if combat is over
+                        if not state["enemies"]:
+                            state["phase"] = "loot"
+                            state["loot_pool"] = generate_loot()
+                            # Award XP and gold
+                            for p in games[room_id]["player_order"]:
+                                state["xp"][p] += 100
+                                state["gold"][p] += random.randint(10, 30)
+                    
+                    elif current_phase == "loot":
+                        state["phase"] = "shop"
+                        state["shop_items"] = generate_shop_items()
+                    
+                    elif current_phase == "shop":
+                        state["phase"] = "setup"
+                        # Save all players
+                        for p in games[room_id]["player_order"]:
+                            player_data = games[room_id]["players"][p].copy()
+                            player_data.update({
+                                "hp": state["player_hp"][p],
+                                "inventory": state["inventory"][p],
+                                "gold": state["gold"][p],
+                                "xp": state["xp"][p]
+                            })
+                            save_player_data(p, player_data["save_slot"], player_data)
+                
+                # Move to next player's turn
+                current_turn_index = games[room_id]["player_order"].index(state["turn"])
+                next_turn_index = (current_turn_index + 1) % len(games[room_id]["player_order"])
+                state["turn"] = games[room_id]["player_order"][next_turn_index]
+                
+                # Update game state
+                games[room_id]["state"] = state
+                
+                # Check for game over conditions
+                if not state["enemies"] and state["phase"] == "combat":
+                    state["winner"] = "Players"
+                
+                # Check if all players are dead
+                alive_players = [p for p in games[room_id]["player_order"] 
+                               if state["player_hp"].get(p, 0) > 0]
+                if not alive_players and state["phase"] == "combat":
+                    state["winner"] = "Enemies"
+            
+            else:
+                # Wait for other player's turn
+                await asyncio.sleep(1)
+                
     except WebSocketDisconnect:
-        connections[room_id].remove(websocket)
+        # Remove player from game
+        if room_id in games and player in games[room_id]["player_order"]:
+            games[room_id]["player_order"].remove(player)
+            if player in games[room_id]["players"]:
+                del games[room_id]["players"][player]
+            
+            # Update turn if needed
+            if games[room_id]["state"]["turn"] == player:
+                if games[room_id]["player_order"]:
+                    games[room_id]["state"]["turn"] = games[room_id]["player_order"][0]
+                else:
+                    games[room_id]["state"]["turn"] = None
 
-def full_state(room_id):
-    g = games[room_id]
-    state = {
-        "players": g["players"],
-        "player_order": g["player_order"],
-        "turn": g["state"]["turn"],
-        "actions": g["state"]["actions"],
-        "grid": g["state"]["grid"],
-        "enemies": g["state"]["enemies"],
-        "shop": g["state"]["shop"],
-        "round": g["state"]["round"],
-        "encounter": g["state"]["encounter"],
-        "encounter_name": g["state"].get("encounter_name", ""),
-        "winner": g["state"]["winner"]
-    }
-    return state
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000) 
