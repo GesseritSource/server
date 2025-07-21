@@ -371,7 +371,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
             state = games[room_id]["state"].copy()
             state["players"] = games[room_id]["players"]
             state["player_order"] = games[room_id]["player_order"]
-            await websocket.send(json.dumps(state))
+            await websocket.send_text(json.dumps(state))
             
             # Wait for action from player
             if state["turn"] == player:
