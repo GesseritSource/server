@@ -193,7 +193,7 @@ def join_room(
     save_slot: int = Query(1),
     load_save: bool = Query(False)
 ):
-    """Join a game room with player data"""
+    print(f"[DEBUG] join_room called: room_id={room_id}, player={player}, class={player_class}, subclass={subclass}, save_slot={save_slot}, load_save={load_save}")
     if room_id not in games:
         return {"error": "Room not found"}
     
