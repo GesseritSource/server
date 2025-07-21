@@ -377,11 +377,12 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
     print(f"[DEBUG] Current rooms: {list(games.keys())}")
     if room_id in games:
         print(f"[DEBUG] Players in room: {list(games[room_id]['players'].keys())}")
-    await websocket.accept()
+    # Move accept below validation
     if room_id not in games or player not in games[room_id]["players"]:
         print("[DEBUG] Rejecting connection: room or player not found")
         await websocket.close()
         return
+    await websocket.accept()
     
     try:
         while True:
