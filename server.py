@@ -375,7 +375,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
             
             # Wait for action from player
             if state["turn"] == player:
-                data = await websocket.recv()
+                data = await websocket.receive_text()
                 action_data = json.loads(data)
                 action = action_data.get("action", {})
                 
