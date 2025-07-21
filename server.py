@@ -35,10 +35,26 @@ app.add_middleware(
 # Game state storage
 games: Dict[str, Dict] = {}
 SAVE_DIR = 'saves'
+ROOMS_FILE = 'rooms.json'
 
 # Ensure save directory exists
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
+
+def save_rooms():
+    with open(ROOMS_FILE, 'w') as f:
+        json.dump(games, f, indent=2)
+
+def load_rooms():
+    global games
+    if os.path.exists(ROOMS_FILE):
+        with open(ROOMS_FILE, 'r') as f:
+            games = json.load(f)
+    else:
+        games = {}
+
+# Load rooms on startup
+load_rooms()
 
 def load_player_data(player_name: str, save_slot: int) -> Optional[Dict]:
     """Load player data from save file"""
@@ -165,6 +181,7 @@ def create_room():
             "encounter_number": 0
         }
     }
+    save_rooms()
     return {"room_id": room_id}
 
 @app.post("/join_room/{room_id}")
@@ -208,6 +225,7 @@ def join_room(
     games[room_id]["state"]["gold"][player] = player_data["gold"]
     games[room_id]["state"]["level"][player] = player_data["level"]
     games[room_id]["state"]["xp"][player] = player_data["xp"]
+    save_rooms()
     
     return {"success": True, "player_data": player_data}
 
@@ -484,6 +502,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
                 
                 # Update game state
                 games[room_id]["state"] = state
+                save_rooms()
                 
                 # Check for game over conditions
                 if not state["enemies"] and state["phase"] == "combat":
@@ -512,6 +531,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
                     games[room_id]["state"]["turn"] = games[room_id]["player_order"][0]
                 else:
                     games[room_id]["state"]["turn"] = None
+            save_rooms()
 
 if __name__ == "__main__":
     import uvicorn
