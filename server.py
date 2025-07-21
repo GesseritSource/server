@@ -6,6 +6,21 @@ import asyncio
 from typing import Dict, List, Optional
 import os
 
+# Load JSON data
+def load_json_data(filename: str) -> Dict:
+    """Load JSON data from file"""
+    try:
+        with open(filename, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Warning: {filename} not found, using fallback data")
+        return {}
+
+# Load all JSON data
+SPELL_DATA = load_json_data('class_spells_level_1_to_20.json')
+WEAPON_DATA = load_json_data('class_weapon_progression_by_level.json')
+PASSIVE_DATA = load_json_data('class_passives_by_level.json')
+
 app = FastAPI()
 
 # Add CORS middleware
@@ -43,7 +58,7 @@ def save_player_data(player_name: str, save_slot: int, player_data: Dict):
         json.dump(player_data, f, indent=2)
 
 def create_new_player(name: str, player_class: str, subclass: str, save_slot: int) -> Dict:
-    """Create a new player with default stats"""
+    """Create a new player with default stats using JSON data"""
     # Standard array: 15, 14, 13, 12
     class_stat_priorities = {
         'Warrior': ['Str', 'Con', 'Wis', 'Int'],
@@ -65,40 +80,63 @@ def create_new_player(name: str, player_class: str, subclass: str, save_slot: in
         if attr not in attributes:
             attributes[attr] = 10
     
-    # Preset starting spells
-    preset_spells = {
-        'Warrior': ['Taunt', 'Defend', 'Cleave', 'Charge'],
-        'Paladin': ['Divine Smite', 'Lay on Hands', 'Aura of Protection', 'Defend'],
-        'Cleric': ['Guiding Bolt', 'Bane', 'Prayer of Healing', 'Spiritual Weapon'],
-        'Priest': ['Bless', 'Healing Word', 'Sanctuary', 'Mass Heal'],
-        'Mage': ['Magic Missile', 'Fireball', 'Shield', 'Haste'],
-        'Ranger': ['Hunter\'s Mark', 'Volley', 'Cure Wounds', 'Defend'],
-    }
+    # Get starting spells from JSON data
+    spells = []
+    if player_class in SPELL_DATA:
+        # Get base spells for level 1
+        base_spells = SPELL_DATA[player_class].get('Base', [])
+        for spell in base_spells:
+            if spell['level'] == 1:
+                spells.append(spell['name'])
+        
+        # Get subclass spells for level 1
+        subclass_spells = SPELL_DATA[player_class].get(subclass, [])
+        for spell in subclass_spells:
+            if spell['level'] == 1:
+                spells.append(spell['name'])
     
-    # Initial weapons
-    initial_weapons = {
-        'Warrior': 'Longsword',
-        'Paladin': 'Warhammer',
-        'Cleric': 'Mace',
-        'Priest': 'Staff',
-        'Mage': 'Wand',
-        'Ranger': 'Shortbow',
-    }
+    # Limit to 4 spells
+    spells = spells[:4]
+    
+    # Get initial weapon from JSON data
+    weapon = "Dagger"  # Fallback
+    if player_class in WEAPON_DATA:
+        level_1_weapons = WEAPON_DATA[player_class]['levels'].get('1', [])
+        if level_1_weapons:
+            weapon = level_1_weapons[0]['name']
+    
+    # Get passive from JSON data
+    passive = None
+    if player_class in PASSIVE_DATA:
+        # Check subclass first
+        if subclass in PASSIVE_DATA[player_class]:
+            level_1_key = "Level 1"
+            if level_1_key in PASSIVE_DATA[player_class][subclass]:
+                passive = PASSIVE_DATA[player_class][subclass][level_1_key]
+        
+        # Check base class if no subclass passive
+        if passive is None and 'Base' in PASSIVE_DATA[player_class]:
+            level_1_key = "Level 1"
+            if level_1_key in PASSIVE_DATA[player_class]['Base']:
+                passive = PASSIVE_DATA[player_class]['Base'][level_1_key]
+    
+    if passive is None:
+        passive = "None"
     
     return {
         'name': name,
         'player_class': player_class,
         'subclass': subclass,
         'level': 1,
-        'spells': preset_spells.get(player_class, [])[:4],
-        'weapon': initial_weapons.get(player_class, 'Dagger'),
+        'spells': spells,
+        'weapon': weapon,
         'inventory': [],
         'gold': 0,
         'save_slot': save_slot,
         'xp': 0,
         'ac': 10 + attributes.get('Con', 10),
         'attributes': attributes,
-        'passive': 'None',
+        'passive': passive,
         'hp': 10 + attributes.get('Con', 10),
         'max_hp': 10 + attributes.get('Con', 10)
     }
@@ -196,37 +234,101 @@ def list_saves(player_name: str):
 
 @app.get("/get_classes")
 def get_classes():
-    """Get available classes and subclasses"""
-    classes = {
-        "Warrior": ["Fighter", "Barbarian"],
-        "Paladin": ["Devotion", "Vengeance"],
-        "Cleric": ["Life", "War"],
-        "Priest": ["Light", "Knowledge"],
-        "Mage": ["Evocation", "Abjuration"],
-        "Ranger": ["Hunter", "Beast Master"]
-    }
+    """Get available classes and subclasses from JSON data"""
+    classes = {}
+    
+    # Get classes and subclasses from spell data
+    if SPELL_DATA:
+        for class_name, subclasses in SPELL_DATA.items():
+            # Filter out 'Base' and get actual subclass names
+            subclass_list = [name for name in subclasses.keys() if name != 'Base']
+            if subclass_list:
+                classes[class_name] = subclass_list
+    
+    # Fallback if JSON data is not available
+    if not classes:
+        classes = {
+            "Warrior": ["Fighter", "Barbarian"],
+            "Paladin": ["Devotion", "Vengeance"],
+            "Cleric": ["Life", "War"],
+            "Priest": ["Light", "Knowledge"],
+            "Mage": ["Evocation", "Abjuration"],
+            "Ranger": ["Hunter", "Beast Master"]
+        }
+    
     return {"classes": classes}
 
 def generate_encounter(encounter_number: int) -> Dict:
-    """Generate enemies for an encounter"""
+    """Generate enemies for an encounter using encounters.json"""
     enemies = {}
-    enemy_types = ["Goblin", "Orc", "Troll", "Dragon"]
     
-    # Scale difficulty with encounter number
-    num_enemies = min(encounter_number + 1, 4)
+    # Load encounters from JSON file
+    encounters = load_json_data('encounters.json')
     
-    for i in range(num_enemies):
-        enemy_type = random.choice(enemy_types)
-        enemy = {
-            "name": f"{enemy_type} {i+1}",
-            "type": enemy_type,
-            "hp": 20 + (encounter_number * 5),
-            "max_hp": 20 + (encounter_number * 5),
-            "damage": 5 + encounter_number,
-            "ac": 12 + encounter_number,
-            "position": [random.randint(0, 5), random.randint(0, 5)]
-        }
-        enemies[enemy["name"]] = enemy
+    if encounters:
+        # Find appropriate encounter based on difficulty
+        suitable_encounters = [e for e in encounters if e['difficulty'] <= encounter_number + 1]
+        if not suitable_encounters:
+            suitable_encounters = encounters
+        
+        # Pick a random suitable encounter
+        encounter = random.choice(suitable_encounters)
+        
+        # Convert encounter enemies to game format
+        for i, enemy_data in enumerate(encounter['enemies']):
+            enemy_type = enemy_data['type']
+            row = enemy_data['row']
+            col = enemy_data['col']
+            
+            # Enemy stats based on type
+            enemy_stats = {
+                'Goblin': {'hp': 30, 'attack': 8, 'ac': 11},
+                'Orc': {'hp': 50, 'attack': 12, 'ac': 13},
+                'Skeleton': {'hp': 40, 'attack': 10, 'ac': 12},
+                'Bandit': {'hp': 35, 'attack': 9, 'ac': 12},
+                'Troll': {'hp': 70, 'attack': 15, 'ac': 14},
+                'Shaman': {'hp': 35, 'attack': 6, 'ac': 12},
+                'Necromancer': {'hp': 30, 'attack': 5, 'ac': 12},
+                'Healer': {'hp': 28, 'attack': 4, 'ac': 11},
+                'Berserker': {'hp': 45, 'attack': 10, 'ac': 12},
+                'Alchemist': {'hp': 32, 'attack': 7, 'ac': 11},
+                'Witch': {'hp': 28, 'attack': 6, 'ac': 12},
+                'Sniper': {'hp': 30, 'attack': 14, 'ac': 12},
+                'Guardian': {'hp': 60, 'attack': 8, 'ac': 15},
+                'Enchanter': {'hp': 30, 'attack': 5, 'ac': 12},
+                'Dragon': {'hp': 120, 'attack': 20, 'ac': 17},
+                'Lich King': {'hp': 100, 'attack': 18, 'ac': 16},
+            }
+            
+            stats = enemy_stats.get(enemy_type, {'hp': 30, 'attack': 8, 'ac': 11})
+            
+            enemy = {
+                "name": f"{enemy_type} {i+1}",
+                "type": enemy_type.lower(),
+                "hp": stats['hp'],
+                "max_hp": stats['hp'],
+                "damage": stats['attack'],
+                "ac": stats['ac'],
+                "position": [row, col]
+            }
+            enemies[enemy["name"]] = enemy
+    else:
+        # Fallback to original generation
+        enemy_types = ["Goblin", "Orc", "Troll", "Dragon"]
+        num_enemies = min(encounter_number + 1, 4)
+        
+        for i in range(num_enemies):
+            enemy_type = random.choice(enemy_types)
+            enemy = {
+                "name": f"{enemy_type} {i+1}",
+                "type": enemy_type,
+                "hp": 20 + (encounter_number * 5),
+                "max_hp": 20 + (encounter_number * 5),
+                "damage": 5 + encounter_number,
+                "ac": 12 + encounter_number,
+                "position": [random.randint(0, 5), random.randint(0, 5)]
+            }
+            enemies[enemy["name"]] = enemy
     
     return enemies
 
