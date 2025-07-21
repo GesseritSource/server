@@ -1,0 +1,108 @@
+[
+  {
+    "name": "Goblin Ambush",
+    "difficulty": 1,
+    "enemies": [
+      {"type": "Goblin", "row": 0, "col": 2},
+      {"type": "Goblin", "row": 0, "col": 3},
+      {"type": "Goblin", "row": 1, "col": 2},
+      {"type": "Goblin", "row": 1, "col": 3}
+    ]
+  },
+  {
+    "name": "Orc Patrol",
+    "difficulty": 2,
+    "enemies": [
+      {"type": "Orc", "row": 0, "col": 2},
+      {"type": "Orc", "row": 1, "col": 3},
+      {"type": "Goblin", "row": 1, "col": 2}
+    ]
+  },
+  {
+    "name": "Shaman's Circle",
+    "difficulty": 3,
+    "enemies": [
+      {"type": "Shaman", "row": 0, "col": 2},
+      {"type": "Goblin", "row": 1, "col": 2},
+      {"type": "Goblin", "row": 1, "col": 3},
+      {"type": "Berserker", "row": 0, "col": 3}
+    ],
+    "special_rules": "Buff focus"
+  },
+  {
+    "name": "Necromancer's Minions",
+    "difficulty": 4,
+    "enemies": [
+      {"type": "Necromancer", "row": 0, "col": 2},
+      {"type": "Skeleton", "row": 1, "col": 2},
+      {"type": "Skeleton", "row": 1, "col": 3},
+      {"type": "Witch", "row": 0, "col": 3}
+    ],
+    "special_rules": "Debuff focus"
+  },
+  {
+    "name": "Alchemist's Bombardment",
+    "difficulty": 5,
+    "enemies": [
+      {"type": "Alchemist", "row": 0, "col": 2},
+      {"type": "Alchemist", "row": 1, "col": 3},
+      {"type": "Goblin", "row": 1, "col": 2},
+      {"type": "Berserker", "row": 0, "col": 3}
+    ],
+    "special_rules": "AoE focus"
+  },
+  {
+    "name": "Sniper's Nest",
+    "difficulty": 6,
+    "enemies": [
+      {"type": "Sniper", "row": 0, "col": 5},
+      {"type": "Bandit", "row": 1, "col": 4},
+      {"type": "Bandit", "row": 1, "col": 5},
+      {"type": "Guardian", "row": 0, "col": 4}
+    ],
+    "special_rules": "Ranged focus"
+  },
+  {
+    "name": "Enchanter's Trickery",
+    "difficulty": 7,
+    "enemies": [
+      {"type": "Enchanter", "row": 0, "col": 2},
+      {"type": "Witch", "row": 1, "col": 2},
+      {"type": "Goblin", "row": 1, "col": 3},
+      {"type": "Guardian", "row": 0, "col": 3}
+    ],
+    "special_rules": "Charm/skip turn"
+  },
+  {
+    "name": "Healer's Defense",
+    "difficulty": 8,
+    "enemies": [
+      {"type": "Healer", "row": 0, "col": 2},
+      {"type": "Guardian", "row": 1, "col": 2},
+      {"type": "Orc", "row": 1, "col": 3},
+      {"type": "Berserker", "row": 0, "col": 3}
+    ],
+    "special_rules": "Healing focus"
+  },
+  {
+    "name": "Boss: Dragon's Fury",
+    "difficulty": 9,
+    "enemies": [
+      {"type": "Dragon", "row": 0, "col": 2},
+      {"type": "Berserker", "row": 1, "col": 2},
+      {"type": "Alchemist", "row": 1, "col": 3}
+    ],
+    "special_rules": "Boss"
+  },
+  {
+    "name": "Boss: Lich King's Court",
+    "difficulty": 10,
+    "enemies": [
+      {"type": "Lich King", "row": 0, "col": 3},
+      {"type": "Necromancer", "row": 1, "col": 2},
+      {"type": "Witch", "row": 1, "col": 3},
+      {"type": "Skeleton", "row": 1, "col": 4}
+    ],
+    "special_rules": "Boss, debuff focus"
+  }
+] 
