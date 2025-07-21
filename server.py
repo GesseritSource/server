@@ -60,6 +60,37 @@ def load_rooms():
 # Load rooms on startup
 load_rooms()
 
+MAIN_ROOM_ID = "room_main"
+
+def ensure_main_room():
+    with room_lock:
+        if MAIN_ROOM_ID not in games:
+            games[MAIN_ROOM_ID] = {
+                "players": {},
+                "player_order": [],
+                "state": {
+                    "turn": None,
+                    "phase": "setup",
+                    "grid": [[None for _ in range(6)] for _ in range(6)],
+                    "player_positions": {},
+                    "enemies": {},
+                    "player_hp": {},
+                    "inventory": {},
+                    "spells": {},
+                    "gold": {},
+                    "level": {},
+                    "xp": {},
+                    "shop_items": [],
+                    "loot_pool": [],
+                    "encounter_number": 0
+                }
+            }
+            save_rooms()
+            print(f"Main room '{MAIN_ROOM_ID}' created and ready.")
+
+# After loading rooms on startup
+ensure_main_room()
+
 def load_player_data(player_name: str, save_slot: int) -> Optional[Dict]:
     """Load player data from save file"""
     save_path = os.path.join(SAVE_DIR, f'save{save_slot}_{player_name}.json')
@@ -163,33 +194,9 @@ def create_new_player(name: str, player_class: str, subclass: str, save_slot: in
 
 @app.post("/create_room")
 def create_room():
-    """Create a new game room"""
-    room_id = f"room_{random.randint(1000, 9999)}"
-    room_id = room_id.lower().strip()
-    with room_lock:
-        games[room_id] = {
-            "players": {},
-            "player_order": [],
-            "state": {
-                "turn": None,
-                "phase": "setup",  # setup, combat, loot, shop
-                "grid": [[None for _ in range(6)] for _ in range(6)],
-                "player_positions": {},
-                "enemies": {},
-                "player_hp": {},
-                "inventory": {},
-                "spells": {},
-                "gold": {},
-                "level": {},
-                "xp": {},
-                "shop_items": [],
-                "loot_pool": [],
-                "encounter_number": 0
-            }
-        }
-        save_rooms()
-        print(f"Created room: {room_id} with players: {list(games[room_id]['players'].keys())}")
-    return {"room_id": room_id}
+    # Always return the main room
+    print(f"[DEBUG] create_room called. Returning main room: {MAIN_ROOM_ID}")
+    return {"room_id": MAIN_ROOM_ID}
 
 @app.post("/join_room/{room_id}")
 def join_room(
@@ -200,7 +207,8 @@ def join_room(
     save_slot: int = Query(1),
     load_save: bool = Query(False)
 ):
-    room_id = room_id.lower().strip()
+    # Ignore provided room_id, always use MAIN_ROOM_ID
+    room_id = MAIN_ROOM_ID
     player = player.lower().strip()
     print(f"[DEBUG] join_room called: room_id={room_id}, player={player}, class={player_class}, subclass={subclass}, save_slot={save_slot}, load_save={load_save}")
     with room_lock:
@@ -379,7 +387,8 @@ def generate_loot() -> List[Dict]:
 
 @app.websocket("/ws/{room_id}/{player}")
 async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
-    room_id = room_id.lower().strip()
+    # Ignore provided room_id, always use MAIN_ROOM_ID
+    room_id = MAIN_ROOM_ID
     player = player.lower().strip()
     await websocket.accept()  # Accept first, then validate
     print(f"[DEBUG] WebSocket connect attempt: room_id={room_id}, player={player}")
