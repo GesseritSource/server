@@ -1,0 +1,686 @@
+{
+  "Cleric": {
+    "Base": [
+      {
+        "name": "Radiant Bolt",
+        "level": 1,
+        "type": "damage",
+        "description": "Fires a radiant projectile that deals holy damage."
+      },
+      {
+        "name": "Bless",
+        "level": 1,
+        "type": "buff",
+        "description": "Increases allies' attack and saving throws."
+      },
+      {
+        "name": "Shield of Faith",
+        "level": 2,
+        "type": "buff",
+        "description": "Increases an ally\u2019s armor class by 2 for 3 rounds."
+      },
+      {
+        "name": "Divine Smite",
+        "level": 5,
+        "type": "damage",
+        "description": "Deals radiant damage, bonus damage vs undead or fiends."
+      },
+      {
+        "name": "Prayer of Warding",
+        "level": 9,
+        "type": "utility",
+        "description": "Reduces all incoming damage by 25% for 2 turns."
+      },
+      {
+        "name": "Radiant Storm",
+        "level": 13,
+        "type": "damage",
+        "description": "Large AoE radiant damage that also blinds enemies."
+      },
+      {
+        "name": "Divine Intercession",
+        "level": 17,
+        "type": "utility",
+        "description": "Prevents one ally from dying for one turn (once per long rest)."
+      }
+    ],
+    "God Fearing": [
+      {
+        "name": "Hallowed Chains",
+        "level": 3,
+        "type": "debuff",
+        "description": "Reduces movement by 50%."
+      },
+      {
+        "name": "Condemn",
+        "level": 3,
+        "type": "debuff",
+        "description": "Prevents target from healing."
+      },
+      {
+        "name": "Divine Restriction",
+        "level": 4,
+        "type": "debuff",
+        "description": "Enemy can only move or attack next turn, not both."
+      },
+      {
+        "name": "Judgment Veil",
+        "level": 5,
+        "type": "debuff",
+        "description": "Reduces all saving throws by 2."
+      },
+      {
+        "name": "Excommunication",
+        "level": 8,
+        "type": "debuff",
+        "description": "Enemy cannot receive any buffs or healing for 3 turns."
+      },
+      {
+        "name": "Chains of Judgment",
+        "level": 12,
+        "type": "debuff",
+        "description": "Roots and silences enemy on failed save."
+      },
+      {
+        "name": "Holy Silence",
+        "level": 16,
+        "type": "debuff",
+        "description": "Enemies in area cannot use abilities for 1 turn."
+      },
+      {
+        "name": "Final Atonement",
+        "level": 20,
+        "type": "debuff",
+        "description": "Applies all God Fearing debuffs in a large AoE (once per long rest)."
+      }
+    ],
+    "War Cleric": [
+      {
+        "name": "Divine Strike",
+        "level": 3,
+        "type": "buff",
+        "description": "Adds radiant damage to attacks."
+      },
+      {
+        "name": "Martial Grace",
+        "level": 4,
+        "type": "buff",
+        "description": "Reduces attack token cost."
+      },
+      {
+        "name": "Sanctified Armor",
+        "level": 5,
+        "type": "buff",
+        "description": "Increases armor class temporarily."
+      },
+      {
+        "name": "Retributive Wrath",
+        "level": 6,
+        "type": "reaction",
+        "description": "Reflects all damage taken to an enemy."
+      },
+      {
+        "name": "Battle Blessing",
+        "level": 10,
+        "type": "buff",
+        "description": "All allies gain +1 to AC and +10% damage for 3 turns."
+      },
+      {
+        "name": "Crusader\u2019s Roar",
+        "level": 14,
+        "type": "buff",
+        "description": "Staggers enemies, boosts allies\u2019 initiative."
+      },
+      {
+        "name": "Martyr's Redemption",
+        "level": 18,
+        "type": "reaction",
+        "description": "Intercepts killing blow for an ally and redirects it to self."
+      }
+    ]
+  },
+  "Priest": {
+    "Base": [
+      {
+        "name": "Prayer of Light",
+        "level": 1,
+        "type": "healing",
+        "description": "Heals a single ally."
+      },
+      {
+        "name": "Holy Barrier",
+        "level": 1,
+        "type": "buff",
+        "description": "Increase AC temporarily."
+      },
+      {
+        "name": "Soothing Hymn",
+        "level": 6,
+        "type": "healing",
+        "description": "AOE healing over 2 turns."
+      },
+      {
+        "name": "Celestial Light",
+        "level": 10,
+        "type": "buff",
+        "description": "Boosts all healing received by 20%."
+      },
+      {
+        "name": "Divine Pulse",
+        "level": 15,
+        "type": "damage",
+        "description": "Pushes enemies back and deals light damage."
+      }
+    ],
+    "Savior": [
+      {
+        "name": "Greater Heal",
+        "level": 3,
+        "type": "healing",
+        "description": "Moderate heal to one or weak heal to all."
+      },
+      {
+        "name": "Blessing of Agility",
+        "level": 4,
+        "type": "buff",
+        "description": "Increase dodge chance by 15%."
+      },
+      {
+        "name": "Smite Undead",
+        "level": 5,
+        "type": "damage",
+        "description": "Holy damage vs undead."
+      },
+      {
+        "name": "Hope Beacon",
+        "level": 9,
+        "type": "buff",
+        "description": "Heals and removes debuffs on all allies."
+      },
+      {
+        "name": "Resurrect",
+        "level": 13,
+        "type": "utility",
+        "description": "Revives a fallen ally at half HP."
+      },
+      {
+        "name": "Angelic Protection",
+        "level": 18,
+        "type": "buff",
+        "description": "One ally becomes immune to damage for 1 turn."
+      }
+    ],
+    "Combat Medic": [
+      {
+        "name": "Adrenal Surge",
+        "level": 3,
+        "type": "buff",
+        "description": "Boosts ally\u2019s damage."
+      },
+      {
+        "name": "Suppression Field",
+        "level": 4,
+        "type": "debuff",
+        "description": "Reduces enemy AC."
+      },
+      {
+        "name": "Exhaustion Cloud",
+        "level": 5,
+        "type": "debuff",
+        "description": "Reduces damage dealt."
+      },
+      {
+        "name": "Frontline Restoration",
+        "level": 9,
+        "type": "healing",
+        "description": "Heal nearby allies instantly."
+      },
+      {
+        "name": "Battle Clarity",
+        "level": 13,
+        "type": "buff",
+        "description": "Reduces cooldowns and action costs for 1 turn."
+      },
+      {
+        "name": "Field Commander",
+        "level": 19,
+        "type": "utility",
+        "description": "Grants all allies one free movement or attack action."
+      }
+    ]
+  },
+  "Mage": {
+    "Base": [
+      {
+        "name": "Arcane Missile",
+        "level": 1,
+        "type": "damage",
+        "description": "Guaranteed arcane hit."
+      },
+      {
+        "name": "Shield",
+        "level": 1,
+        "type": "buff",
+        "description": "Increases AC until next turn."
+      },
+      {
+        "name": "Blink",
+        "level": 6,
+        "type": "utility",
+        "description": "Short-range teleport."
+      },
+      {
+        "name": "Arcane Wave",
+        "level": 10,
+        "type": "damage",
+        "description": "Mid-damage wave that pushes enemies."
+      },
+      {
+        "name": "Magic Echo",
+        "level": 16,
+        "type": "utility",
+        "description": "Cast most recent spell again."
+      }
+    ],
+    "Dragon Mage": [
+      {
+        "name": "Draconic Flame",
+        "level": 3,
+        "type": "fire",
+        "description": "High fire damage in cone."
+      },
+      {
+        "name": "Scorching Embers",
+        "level": 4,
+        "type": "dot",
+        "description": "Fire DoT."
+      },
+      {
+        "name": "Molten Breath",
+        "level": 5,
+        "type": "fire",
+        "description": "Fire damage, chance to reduce AC."
+      },
+      {
+        "name": "Infernal Nova",
+        "level": 6,
+        "type": "fire",
+        "description": "Explosive AoE, massive fire damage."
+      },
+      {
+        "name": "Drake's Fury",
+        "level": 11,
+        "type": "fire",
+        "description": "Fire damage and fear effect."
+      },
+      {
+        "name": "Emberstorm",
+        "level": 15,
+        "type": "dot",
+        "description": "Burn all enemies for 3 rounds."
+      },
+      {
+        "name": "Soulfire Surge",
+        "level": 20,
+        "type": "fire",
+        "description": "Top-tier fire spell. Max burn + stun chance."
+      }
+    ],
+    "Chronomancer": [
+      {
+        "name": "Time Rewind",
+        "level": 3,
+        "type": "utility",
+        "description": "Enemy rerolls attack on ally."
+      },
+      {
+        "name": "Freeze Pulse",
+        "level": 4,
+        "type": "ice",
+        "description": "Chance to freeze target."
+      },
+      {
+        "name": "Accelerate",
+        "level": 5,
+        "type": "buff",
+        "description": "Reduce spell cost by 1."
+      },
+      {
+        "name": "Chrono Cage",
+        "level": 6,
+        "type": "debuff",
+        "description": "Slows and lowers initiative."
+      },
+      {
+        "name": "Ice Time",
+        "level": 10,
+        "type": "ice",
+        "description": "Freeze enemies in AoE for 1 turn."
+      },
+      {
+        "name": "Future Echo",
+        "level": 14,
+        "type": "utility",
+        "description": "See next enemy move and counter."
+      },
+      {
+        "name": "Absolute Zero",
+        "level": 20,
+        "type": "ice",
+        "description": "Freeze all enemies. High damage. Once/day."
+      }
+    ]
+  },
+  "Warrior": {
+    "Base": [
+      {
+        "name": "Taunt",
+        "level": 1,
+        "type": "special",
+        "description": "Force enemy to attack you next turn."
+      },
+      {
+        "name": "Defend",
+        "level": 1,
+        "type": "special",
+        "description": "Increase AC by 2 until next turn."
+      },
+      {
+        "name": "Cleave",
+        "level": 1,
+        "type": "special",
+        "description": "Attack all enemies in adjacent squares."
+      },
+      {
+        "name": "Charge",
+        "level": 1,
+        "type": "special",
+        "description": "Move 2 squares and attack with +2 damage."
+      },
+      {
+        "name": "Battle Cry",
+        "level": 3,
+        "type": "buff",
+        "description": "Allies gain +1 to attack rolls for 2 turns."
+      },
+      {
+        "name": "Second Wind",
+        "level": 5,
+        "type": "healing",
+        "description": "Heal for 1d10 + level HP once per combat."
+      },
+      {
+        "name": "Action Surge",
+        "level": 8,
+        "type": "special",
+        "description": "Gain an extra action this turn."
+      },
+      {
+        "name": "Indomitable",
+        "level": 12,
+        "type": "special",
+        "description": "Reroll a failed saving throw once per long rest."
+      }
+    ],
+    "Fighter": [
+      {
+        "name": "Precision Strike",
+        "level": 3,
+        "type": "special",
+        "description": "Next attack has advantage and deals +1d6 damage."
+      },
+      {
+        "name": "Combat Superiority",
+        "level": 5,
+        "type": "special",
+        "description": "Reduce enemy's next attack damage by 1d8."
+      },
+      {
+        "name": "Tactical Mastery",
+        "level": 8,
+        "type": "special",
+        "description": "Gain +2 to all attack rolls for 1 turn."
+      },
+      {
+        "name": "Weapon Mastery",
+        "level": 12,
+        "type": "special",
+        "description": "Weapon attacks deal +2 damage permanently."
+      }
+    ],
+    "Barbarian": [
+      {
+        "name": "Rage",
+        "level": 3,
+        "type": "buff",
+        "description": "Gain +2 damage and resistance to physical damage."
+      },
+      {
+        "name": "Reckless Attack",
+        "level": 5,
+        "type": "special",
+        "description": "Attack with advantage but enemies have advantage against you."
+      },
+      {
+        "name": "Brutal Critical",
+        "level": 8,
+        "type": "special",
+        "description": "Critical hits deal +1d6 extra damage."
+      },
+      {
+        "name": "Relentless Rage",
+        "level": 12,
+        "type": "special",
+        "description": "When reduced to 0 HP, make a save to stay at 1 HP."
+      }
+    ]
+  },
+  "Paladin": {
+    "Base": [
+      {
+        "name": "Divine Smite",
+        "level": 1,
+        "type": "spell",
+        "description": "Add radiant damage to weapon attack."
+      },
+      {
+        "name": "Lay on Hands",
+        "level": 1,
+        "type": "healing",
+        "description": "Heal target for 5 \u00d7 level HP."
+      },
+      {
+        "name": "Aura of Protection",
+        "level": 1,
+        "type": "buff",
+        "description": "Allies within 2 squares gain +1 to saving throws."
+      },
+      {
+        "name": "Divine Sense",
+        "level": 1,
+        "type": "utility",
+        "description": "Detect undead, fiends, and celestials within 10 squares."
+      },
+      {
+        "name": "Divine Health",
+        "level": 3,
+        "type": "passive",
+        "description": "Immune to disease."
+      },
+      {
+        "name": "Divine Favor",
+        "level": 5,
+        "type": "buff",
+        "description": "Weapon attacks deal +1d4 radiant damage for 1 minute."
+      },
+      {
+        "name": "Aura of Courage",
+        "level": 8,
+        "type": "passive",
+        "description": "Allies within aura are immune to fear."
+      },
+      {
+        "name": "Improved Divine Smite",
+        "level": 12,
+        "type": "passive",
+        "description": "Weapon attacks deal +1d8 radiant damage."
+      }
+    ],
+    "Devotion": [
+      {
+        "name": "Sacred Weapon",
+        "level": 3,
+        "type": "buff",
+        "description": "Weapon becomes magical and deals +1d4 radiant damage."
+      },
+      {
+        "name": "Turn the Unholy",
+        "level": 5,
+        "type": "special",
+        "description": "Force undead and fiends to flee for 1 minute."
+      },
+      {
+        "name": "Aura of Devotion",
+        "level": 8,
+        "type": "passive",
+        "description": "Allies within aura cannot be charmed."
+      },
+      {
+        "name": "Holy Nimbus",
+        "level": 12,
+        "type": "buff",
+        "description": "Radiant aura damages enemies and heals allies."
+      }
+    ],
+    "Vengeance": [
+      {
+        "name": "Vow of Enmity",
+        "level": 3,
+        "type": "special",
+        "description": "Gain advantage on attacks against one enemy for 1 minute."
+      },
+      {
+        "name": "Relentless Avenger",
+        "level": 5,
+        "type": "special",
+        "description": "When you hit with opportunity attack, move up to half speed."
+      },
+      {
+        "name": "Soul of Vengeance",
+        "level": 8,
+        "type": "special",
+        "description": "When enemy attacks ally, you can make opportunity attack."
+      },
+      {
+        "name": "Avenging Angel",
+        "level": 12,
+        "type": "buff",
+        "description": "Gain flight and +2 to all attack rolls for 1 minute."
+      }
+    ]
+  },
+  "Ranger": {
+    "Base": [
+      {
+        "name": "Hunter's Mark",
+        "level": 1,
+        "type": "spell",
+        "description": "Mark target for +1d6 damage on attacks."
+      },
+      {
+        "name": "Volley",
+        "level": 1,
+        "type": "spell",
+        "description": "Attack all enemies in a 3x3 area."
+      },
+      {
+        "name": "Cure Wounds",
+        "level": 1,
+        "type": "healing",
+        "description": "Heal target for 1d8 + modifier HP."
+      },
+      {
+        "name": "Goodberry",
+        "level": 1,
+        "type": "healing",
+        "description": "Create 10 berries that heal 1 HP each."
+      },
+      {
+        "name": "Favored Enemy",
+        "level": 3,
+        "type": "passive",
+        "description": "Gain +2 damage against chosen enemy type."
+      },
+      {
+        "name": "Natural Explorer",
+        "level": 5,
+        "type": "passive",
+        "description": "Gain advantage on initiative rolls."
+      },
+      {
+        "name": "Hide in Plain Sight",
+        "level": 8,
+        "type": "utility",
+        "description": "Become invisible when not moving for 1 minute."
+      },
+      {
+        "name": "Feral Senses",
+        "level": 12,
+        "type": "passive",
+        "description": "Cannot be surprised and have advantage on perception checks."
+      }
+    ],
+    "Hunter": [
+      {
+        "name": "Colossus Slayer",
+        "level": 3,
+        "type": "passive",
+        "description": "Deal +1d8 damage to damaged enemies once per turn."
+      },
+      {
+        "name": "Giant Killer",
+        "level": 5,
+        "type": "special",
+        "description": "When large+ enemy attacks you, make opportunity attack."
+      },
+      {
+        "name": "Horde Breaker",
+        "level": 8,
+        "type": "special",
+        "description": "Make extra attack against different enemy within 5 feet."
+      },
+      {
+        "name": "Volley",
+        "level": 12,
+        "type": "special",
+        "description": "Attack all enemies in 10-foot cube."
+      }
+    ],
+    "Beast Master": [
+      {
+        "name": "Ranger's Companion",
+        "level": 3,
+        "type": "special",
+        "description": "Summon a beast companion to fight with you."
+      },
+      {
+        "name": "Exceptional Training",
+        "level": 5,
+        "type": "special",
+        "description": "Beast companion can take the Help action."
+      },
+      {
+        "name": "Bestial Fury",
+        "level": 8,
+        "type": "special",
+        "description": "Beast companion can make two attacks."
+      },
+      {
+        "name": "Share Spells",
+        "level": 12,
+        "type": "special",
+        "description": "When you cast a spell, beast companion also benefits."
+      }
+    ]
+  }
+}

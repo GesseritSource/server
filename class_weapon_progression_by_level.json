@@ -1,0 +1,306 @@
+{
+  "Warrior": {
+    "weapon_types": [
+      "Greatsword",
+      "Battleaxe",
+      "Warhammer"
+    ],
+    "levels": {
+      "1": [
+        {
+          "name": "Iron Greatsword",
+          "damage": "2d6",
+          "passive": "None"
+        }
+      ],
+      "4": [
+        {
+          "name": "Steel Battleaxe",
+          "damage": "1d12",
+          "passive": "5% chance to cleave adjacent enemy"
+        }
+      ],
+      "8": [
+        {
+          "name": "Heavy Warhammer",
+          "damage": "2d8",
+          "passive": "Knocks target back 1 tile"
+        }
+      ],
+      "12": [
+        {
+          "name": "Runed Greatsword",
+          "damage": "2d10",
+          "passive": "10% chance to apply bleed"
+        }
+      ],
+      "16": [
+        {
+          "name": "Titan's Warhammer",
+          "damage": "2d12",
+          "passive": "+2 Armor Penetration"
+        }
+      ],
+      "20": [
+        {
+          "name": "Mythril Battleaxe",
+          "damage": "3d8",
+          "passive": "On crit: deal bonus attack"
+        }
+      ]
+    }
+  },
+  "Paladin": {
+    "weapon_types": [
+      "Longsword",
+      "Mace",
+      "Warhammer"
+    ],
+    "levels": {
+      "1": [
+        {
+          "name": "Iron Longsword",
+          "damage": "1d10",
+          "passive": "None"
+        }
+      ],
+      "4": [
+        {
+          "name": "Blessed Mace",
+          "damage": "1d8",
+          "passive": "5% chance to heal ally for 1d4"
+        }
+      ],
+      "8": [
+        {
+          "name": "Sanctified Warhammer",
+          "damage": "2d6",
+          "passive": "Bonus holy damage to undead"
+        }
+      ],
+      "12": [
+        {
+          "name": "Holy Avenger Sword",
+          "damage": "2d8",
+          "passive": "+1 to hit allies in aura"
+        }
+      ],
+      "16": [
+        {
+          "name": "Divine Mace",
+          "damage": "2d10",
+          "passive": "Enemies hit lose 1 action token"
+        }
+      ],
+      "20": [
+        {
+          "name": "Radiant Warhammer",
+          "damage": "3d6",
+          "passive": "Crits force Wisdom save or stun"
+        }
+      ]
+    }
+  },
+  "Ranger": {
+    "weapon_types": [
+      "Shortbow",
+      "Crossbow",
+      "Longbow"
+    ],
+    "levels": {
+      "1": [
+        {
+          "name": "Wooden Shortbow",
+          "damage": "1d8",
+          "passive": "None"
+        }
+      ],
+      "4": [
+        {
+          "name": "Iron Crossbow",
+          "damage": "1d10",
+          "passive": "+1 damage vs targets within 3 tiles"
+        }
+      ],
+      "8": [
+        {
+          "name": "Longbow of Precision",
+          "damage": "2d6",
+          "passive": "+10% hit chance at long range"
+        }
+      ],
+      "12": [
+        {
+          "name": "Piercing Crossbow",
+          "damage": "2d8",
+          "passive": "Ignores 2 points of armor"
+        }
+      ],
+      "16": [
+        {
+          "name": "Ranger's Longbow",
+          "damage": "2d10",
+          "passive": "Attacks apply slow"
+        }
+      ],
+      "20": [
+        {
+          "name": "Eagle-Eye Shortbow",
+          "damage": "3d6",
+          "passive": "Gain 1 action token on kill"
+        }
+      ]
+    }
+  },
+  "Cleric": {
+    "weapon_types": [
+      "Mace",
+      "Staff"
+    ],
+    "levels": {
+      "1": [
+        {
+          "name": "Wooden Mace",
+          "damage": "1d6",
+          "passive": "None"
+        }
+      ],
+      "4": [
+        {
+          "name": "Blessed Staff",
+          "damage": "1d8",
+          "passive": "Heals ally in range 1 for 1 HP on hit"
+        }
+      ],
+      "8": [
+        {
+          "name": "Priest's Mace",
+          "damage": "1d10",
+          "passive": "+1 holy damage"
+        }
+      ],
+      "12": [
+        {
+          "name": "Anointed Staff",
+          "damage": "2d6",
+          "passive": "Enemies hit -1 saving throw"
+        }
+      ],
+      "16": [
+        {
+          "name": "Cleric's War Mace",
+          "damage": "2d8",
+          "passive": "Deal bonus damage to cursed enemies"
+        }
+      ],
+      "20": [
+        {
+          "name": "Divine Judgment Staff",
+          "damage": "2d10",
+          "passive": "Crits restore 1 action token"
+        }
+      ]
+    }
+  },
+  "Priest": {
+    "weapon_types": [
+      "Staff",
+      "Wand"
+    ],
+    "levels": {
+      "1": [
+        {
+          "name": "Simple Staff",
+          "damage": "1d4",
+          "passive": "None"
+        }
+      ],
+      "4": [
+        {
+          "name": "Wand of Blessing",
+          "damage": "1d6",
+          "passive": "On hit: +1 AC to ally"
+        }
+      ],
+      "8": [
+        {
+          "name": "Healer's Staff",
+          "damage": "1d8",
+          "passive": "Heal lowest HP ally 1 HP"
+        }
+      ],
+      "12": [
+        {
+          "name": "Wand of Mercy",
+          "damage": "1d10",
+          "passive": "+1 to healing spells"
+        }
+      ],
+      "16": [
+        {
+          "name": "Sanctified Staff",
+          "damage": "2d6",
+          "passive": "Allies hit by enemy take -1 damage"
+        }
+      ],
+      "20": [
+        {
+          "name": "Saint's Staff",
+          "damage": "2d8",
+          "passive": "Heal all allies for 1 HP on crit"
+        }
+      ]
+    }
+  },
+  "Mage": {
+    "weapon_types": [
+      "Wand",
+      "Staff",
+      "Orb"
+    ],
+    "levels": {
+      "1": [
+        {
+          "name": "Basic Wand",
+          "damage": "1d6",
+          "passive": "None"
+        }
+      ],
+      "4": [
+        {
+          "name": "Wand of Sparks",
+          "damage": "1d8",
+          "passive": "5% chance to deal bonus fire damage"
+        }
+      ],
+      "8": [
+        {
+          "name": "Arcane Staff",
+          "damage": "1d10",
+          "passive": "+1 to all spell damage"
+        }
+      ],
+      "12": [
+        {
+          "name": "Orb of Control",
+          "damage": "2d6",
+          "passive": "Can reroll one enemy action each round"
+        }
+      ],
+      "16": [
+        {
+          "name": "Dragon\u2019s Staff",
+          "damage": "2d8",
+          "passive": "+1 to DoT duration"
+        }
+      ],
+      "20": [
+        {
+          "name": "Chrono Wand",
+          "damage": "2d10",
+          "passive": "Spells cost -1 action token once/turn"
+        }
+      ]
+    }
+  }
+}

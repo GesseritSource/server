@@ -1,0 +1,128 @@
+{
+  "Warrior": {
+    "Base": {
+      "Level 1": "Iron Body: Gain 5% resistance to physical damage.",
+      "Level 5": "Battle Focus: Reduce action token cost of melee attacks by 1 once per turn.",
+      "Level 9": "Endurance Surge: Heal for 10% of max HP when dropping below 25% HP (1x per battle)."
+    },
+    "Berserker": {
+      "Level 4": "Frenzy: Gain 10% bonus damage while enraged.",
+      "Level 8": "Bloodlust: Gain +10 max HP and 5% damage resistance during rage.",
+      "Level 12": "Uncontrolled Wrath: 10% chance to attack nearest ally in range while enraged.",
+      "Level 16": "Surge of Power: Extend rage duration by 1 turn and gain +1 action token during first turn of rage.",
+      "Level 20": "Primordial Rage: Gain immunity to crowd control while enraged."
+    },
+    "Titain": {
+      "Level 4": "Totemic Foundation: Place a totem that gives +1 AC to allies within 2 squares.",
+      "Level 8": "Damage Threshold: Gain flat damage reduction equal to 2 + level/4 (min 3).",
+      "Level 12": "Totemic Empowerment: Totems now also heal 5% HP per turn.",
+      "Level 16": "Titan's Resolve: HP growth increased by 20%.",
+      "Level 20": "Unbreakable: Ignore all damage below your damage threshold."
+    }
+  },
+  "Paladin": {
+    "Base": {
+      "Level 1": "Sacred Ward: Gain +1 to all saving throws.",
+      "Level 5": "Shield of Light: First attack each round against you has -1 to hit.",
+      "Level 9": "Divine Surge: Gain 1 action token on crit (1x/turn)."
+    },
+    "Oath of Conquest": {
+      "Level 4": "Aura of Precision: Allies within 2 tiles gain +10% chance to hit.",
+      "Level 8": "Aura of Might: Allies within range deal +1 holy damage on attacks.",
+      "Level 12": "Judgment: Once per combat, force lower level enemy to make WIS save or die.",
+      "Level 16": "Inspiring Commander: All allies gain +2 initiative while within aura.",
+      "Level 20": "Domination: All enemies in aura make a WIS save or become frightened for 1 turn."
+    },
+    "Oath of Protection": {
+      "Level 4": "Aura of Endurance: Allies in range gain +5 temporary HP at start of combat.",
+      "Level 8": "Aura of Fortitude: Allies within range gain +1 AC and all saving throws.",
+      "Level 12": "Protector: Use a d4 roll to shield allies from fatal damage (drop to 1 HP).",
+      "Level 16": "Guardian's Shield: While active, all ranged attacks against allies have -2 to hit.",
+      "Level 20": "Sanctuary Dome: Allies in aura are immune to death for 1 turn (1x/day)."
+    }
+  },
+  "Cleric": {
+    "God Fearing": {
+      "Level 4": "Unholy Lock: Healing reduction debuff lasts an extra turn.",
+      "Level 8": "Holy Chains: Root effect now also silences for 1 round.",
+      "Level 12": "Aura of Judgment: Enemies within 2 tiles gain -2 to saving throws.",
+      "Level 16": "Sacred Oppression: Healing reduction now applies to AoE.",
+      "Level 20": "Seal of Denial: Once per day, prevent enemy spellcasting for 2 rounds."
+    },
+    "War Cleric": {
+      "Level 4": "Blessed Arms: Gain +1 magic damage on weapon attacks.",
+      "Level 8": "Armor of Faith: Gain +2 AC while using divine buffs.",
+      "Level 12": "Divine Warrior: Attack token cost is permanently reduced by 1.",
+      "Level 16": "Wrath Transfer: Reaction damage reflection can now target multiple enemies.",
+      "Level 20": "Crusader's Judgment: Ignore resistance when using divine strikes."
+    },
+    "Base": {
+      "Level 1": "Divine Favor: Gain +1 to all saving throws.",
+      "Level 5": "Divine Protection: First attack each round against you has -1 to hit.",
+      "Level 9": "Divine Intervention: Once per long rest, automatically succeed on a failed save."
+    }
+  },
+  "Priest": {
+    "Savior": {
+      "Level 4": "Graceful Healing: Heal spells restore +10% more HP.",
+      "Level 8": "Protective Light: Buffs grant 5 temporary HP.",
+      "Level 12": "Angelic Presence: Allies in range gain +5% dodge chance.",
+      "Level 16": "Divine Restoration: Automatically revive 1 ally per day with 20% HP.",
+      "Level 20": "Final Miracle: When Savior falls, one ally is fully healed (1x/day)."
+    },
+    "Combat Medic": {
+      "Level 4": "Stim Boost: Buffed allies deal +1 damage.",
+      "Level 8": "Tactical Suppression: Enemies debuffed lose 1 initiative.",
+      "Level 12": "Combat Efficiency: Reduce cooldown on support spells by 1 turn.",
+      "Level 16": "Emergency Pulse: At 0 HP, heal nearby allies before falling.",
+      "Level 20": "Battlefield Commander: All allies gain +1 action token for 1 turn (1x/day)."
+    },
+    "Base": {
+      "Level 1": "Divine Grace: Healing spells restore +1 HP.",
+      "Level 5": "Protective Aura: Allies within 2 squares gain +1 AC.",
+      "Level 9": "Divine Blessing: Once per long rest, fully heal one ally."
+    }
+  },
+  "Mage": {
+    "Dragon Mage": {
+      "Level 4": "Burning Vigor: Fire spells deal +1 damage.",
+      "Level 8": "Blazing Fury: Burn effect lasts 1 extra turn.",
+      "Level 12": "Scorching Soul: Fire spells ignore resistance.",
+      "Level 16": "Dragonborn Power: Gain 10 temporary HP when casting AoE fire spells.",
+      "Level 20": "Infernal Majesty: All fire damage doubled for 1 turn (1x/day)."
+    },
+    "Chronomancer": {
+      "Level 4": "Temporal Awareness: +1 to initiative and dodge.",
+      "Level 8": "Time Shift: Once per battle, reroll a failed spell save.",
+      "Level 12": "Frozen Delay: Ice spells now reduce action token pool.",
+      "Level 16": "Arcane Timeflow: Spells cost 1 less token for 2 turns (1x/day).",
+      "Level 20": "Chrono Reset: Reset all cooldowns (1x/day)."
+    },
+    "Base": {
+      "Level 1": "Arcane Recovery: Regain spell slots on short rest.",
+      "Level 5": "Arcane Ward: Gain temporary HP equal to spell level when casting.",
+      "Level 9": "Arcane Mastery: Spells cost 1 less mana to cast."
+    }
+  },
+  "Ranger": {
+    "Beast Master": {
+      "Level 4": "Pack Tactics: Wolf deals +1 damage if near ally.",
+      "Level 8": "Alpha Instinct: Wolf acts at start of combat automatically.",
+      "Level 12": "Shared Resolve: If wolf survives, Ranger gains +10% damage.",
+      "Level 16": "Beast Bond: Wolf shares damage taken with Ranger (50%).",
+      "Level 20": "Primal Duo: Control both characters with 2 action token pools."
+    },
+    "Deadshot": {
+      "Level 4": "Flank Exploit: Gain +1d4 damage on flanking enemy.",
+      "Level 8": "Keen Precision: Weapon attacks deal +2 critical damage.",
+      "Level 12": "Lethal Aim: Reduce melee token cost by 1 permanently.",
+      "Level 16": "Execution Shot: If enemy is below 25% HP, gain +3 damage.",
+      "Level 20": "Death Dealer: Ignore armor when flanking (1x/turn)."
+    },
+    "Base": {
+      "Level 1": "Natural Awareness: Gain +1 to perception and survival checks.",
+      "Level 5": "Fleet of Foot: Movement speed increased by 5 feet.",
+      "Level 9": "Vanish: Can hide as a bonus action once per turn."
+    }
+  }
+}
