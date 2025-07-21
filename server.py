@@ -5,6 +5,7 @@ import random
 import asyncio
 from typing import Dict, List, Optional
 import os
+from threading import Lock
 
 # Load JSON data
 def load_json_data(filename: str) -> Dict:
@@ -36,14 +37,16 @@ app.add_middleware(
 games: Dict[str, Dict] = {}
 SAVE_DIR = 'saves'
 ROOMS_FILE = 'rooms.json'
+room_lock = Lock()
 
 # Ensure save directory exists
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
 
 def save_rooms():
-    with open(ROOMS_FILE, 'w') as f:
-        json.dump(games, f, indent=2)
+    with room_lock:
+        with open(ROOMS_FILE, 'w') as f:
+            json.dump(games, f, indent=2)
 
 def load_rooms():
     global games
@@ -52,6 +55,7 @@ def load_rooms():
             games = json.load(f)
     else:
         games = {}
+    print(f"Server started with {len(games)} rooms loaded")
 
 # Load rooms on startup
 load_rooms()
@@ -161,27 +165,30 @@ def create_new_player(name: str, player_class: str, subclass: str, save_slot: in
 def create_room():
     """Create a new game room"""
     room_id = f"room_{random.randint(1000, 9999)}"
-    games[room_id] = {
-        "players": {},
-        "player_order": [],
-        "state": {
-            "turn": None,
-            "phase": "setup",  # setup, combat, loot, shop
-            "grid": [[None for _ in range(6)] for _ in range(6)],
-            "player_positions": {},
-            "enemies": {},
-            "player_hp": {},
-            "inventory": {},
-            "spells": {},
-            "gold": {},
-            "level": {},
-            "xp": {},
-            "shop_items": [],
-            "loot_pool": [],
-            "encounter_number": 0
+    room_id = room_id.lower().strip()
+    with room_lock:
+        games[room_id] = {
+            "players": {},
+            "player_order": [],
+            "state": {
+                "turn": None,
+                "phase": "setup",  # setup, combat, loot, shop
+                "grid": [[None for _ in range(6)] for _ in range(6)],
+                "player_positions": {},
+                "enemies": {},
+                "player_hp": {},
+                "inventory": {},
+                "spells": {},
+                "gold": {},
+                "level": {},
+                "xp": {},
+                "shop_items": [],
+                "loot_pool": [],
+                "encounter_number": 0
+            }
         }
-    }
-    save_rooms()
+        save_rooms()
+        print(f"Created room: {room_id} with players: {list(games[room_id]['players'].keys())}")
     return {"room_id": room_id}
 
 @app.post("/join_room/{room_id}")
@@ -193,40 +200,39 @@ def join_room(
     save_slot: int = Query(1),
     load_save: bool = Query(False)
 ):
+    room_id = room_id.lower().strip()
+    player = player.lower().strip()
     print(f"[DEBUG] join_room called: room_id={room_id}, player={player}, class={player_class}, subclass={subclass}, save_slot={save_slot}, load_save={load_save}")
-    if room_id not in games:
-        return {"error": "Room not found"}
-    
-    # Load existing player data or create new player
-    if load_save:
-        player_data = load_player_data(player, save_slot)
-        if player_data:
-            games[room_id]["players"][player] = player_data
+    with room_lock:
+        if room_id not in games:
+            return {"error": "Room not found"}
+        # Load existing player data or create new player
+        if load_save:
+            player_data = load_player_data(player, save_slot)
+            if player_data:
+                games[room_id]["players"][player] = player_data
+            else:
+                return {"error": "Save file not found"}
         else:
-            return {"error": "Save file not found"}
-    else:
-        if not player_class or not subclass:
-            return {"error": "Player class and subclass required for new characters"}
-        player_data = create_new_player(player, player_class, subclass, save_slot)
-        games[room_id]["players"][player] = player_data
-    
-    # Add to player order if not already there
-    if player not in games[room_id]["player_order"]:
-        games[room_id]["player_order"].append(player)
-    
-    # Set turn if not set
-    if games[room_id]["state"]["turn"] is None and games[room_id]["player_order"]:
-        games[room_id]["state"]["turn"] = games[room_id]["player_order"][0]
-    
-    # Update state with player data
-    games[room_id]["state"]["player_hp"][player] = player_data["hp"]
-    games[room_id]["state"]["inventory"][player] = player_data["inventory"]
-    games[room_id]["state"]["spells"][player] = player_data["spells"]
-    games[room_id]["state"]["gold"][player] = player_data["gold"]
-    games[room_id]["state"]["level"][player] = player_data["level"]
-    games[room_id]["state"]["xp"][player] = player_data["xp"]
-    save_rooms()
-    
+            if not player_class or not subclass:
+                return {"error": "Player class and subclass required for new characters"}
+            player_data = create_new_player(player, player_class, subclass, save_slot)
+            games[room_id]["players"][player] = player_data
+        # Add to player order if not already there
+        if player not in games[room_id]["player_order"]:
+            games[room_id]["player_order"].append(player)
+        # Set turn if not set
+        if games[room_id]["state"]["turn"] is None and games[room_id]["player_order"]:
+            games[room_id]["state"]["turn"] = games[room_id]["player_order"][0]
+        # Update state with player data
+        games[room_id]["state"]["player_hp"][player] = player_data["hp"]
+        games[room_id]["state"]["inventory"][player] = player_data["inventory"]
+        games[room_id]["state"]["spells"][player] = player_data["spells"]
+        games[room_id]["state"]["gold"][player] = player_data["gold"]
+        games[room_id]["state"]["level"][player] = player_data["level"]
+        games[room_id]["state"]["xp"][player] = player_data["xp"]
+        save_rooms()
+        print(f"Player {player} joined room {room_id}. Current players: {list(games[room_id]['players'].keys())}")
     return {"success": True, "player_data": player_data}
 
 @app.get("/list_saves/{player_name}")
@@ -373,17 +379,20 @@ def generate_loot() -> List[Dict]:
 
 @app.websocket("/ws/{room_id}/{player}")
 async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
+    room_id = room_id.lower().strip()
+    player = player.lower().strip()
+    await websocket.accept()  # Accept first, then validate
     print(f"[DEBUG] WebSocket connect attempt: room_id={room_id}, player={player}")
     print(f"[DEBUG] Current rooms: {list(games.keys())}")
     if room_id in games:
         print(f"[DEBUG] Players in room: {list(games[room_id]['players'].keys())}")
-    # Move accept below validation
-    if room_id not in games or player not in games[room_id]["players"]:
-        print("[DEBUG] Rejecting connection: room or player not found")
-        await websocket.close()
-        return
-    await websocket.accept()
-    
+    with room_lock:
+        if room_id not in games or player not in games[room_id]["players"]:
+            error = f"Rejected: Room {room_id} or Player {player} not found"
+            print(f"[DEBUG] {error}")
+            await websocket.send_text(json.dumps({"error": error}))
+            await websocket.close()
+            return
     try:
         while True:
             # Send current game state
@@ -521,18 +530,19 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player: str):
                 
     except WebSocketDisconnect:
         # Remove player from game
-        if room_id in games and player in games[room_id]["player_order"]:
-            games[room_id]["player_order"].remove(player)
-            if player in games[room_id]["players"]:
-                del games[room_id]["players"][player]
-            
-            # Update turn if needed
-            if games[room_id]["state"]["turn"] == player:
-                if games[room_id]["player_order"]:
-                    games[room_id]["state"]["turn"] = games[room_id]["player_order"][0]
-                else:
-                    games[room_id]["state"]["turn"] = None
-            save_rooms()
+        with room_lock:
+            if room_id in games and player in games[room_id]["player_order"]:
+                games[room_id]["player_order"].remove(player)
+                if player in games[room_id]["players"]:
+                    del games[room_id]["players"][player]
+                
+                # Update turn if needed
+                if games[room_id]["state"]["turn"] == player:
+                    if games[room_id]["player_order"]:
+                        games[room_id]["state"]["turn"] = games[room_id]["player_order"][0]
+                    else:
+                        games[room_id]["state"]["turn"] = None
+                save_rooms()
 
 if __name__ == "__main__":
     import uvicorn
